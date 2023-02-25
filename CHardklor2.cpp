@@ -17,6 +17,8 @@ limitations under the License.
 
 #include "CHardklor2.h"
 
+#include <corecrt_io.h>
+
 using namespace std;
 using namespace MSToolkit;
 
@@ -71,6 +73,9 @@ int CHardklor2::GoHardklor(CHardklorSetting sett, Spectrum* s){
   iPercent=0;
 	getTimerFrequency(timerFrequency);
 
+	if (cs.reportAveragineAndMassOffset)
+		bShowPerformanceHints = false; // Skyline doesn't want the performance suggestions
+
   vResults.clear();
 
 	//For noise reduction
@@ -92,7 +97,7 @@ int CHardklor2::GoHardklor(CHardklorSetting sett, Spectrum* s){
     return -1;
   }
 
-  if (!bMem) fout = fopen(cs.outFile, "wt");
+  if (!bMem) fout = fopen(cs.outFile.c_str(), "wt");
 
 	//read a spectrum
 	getExactTime(startTime);
@@ -182,9 +187,12 @@ int CHardklor2::GoHardklor(CHardklorSetting sett, Spectrum* s){
 		//Update progress
 		if(bEcho){
 			if (r.getPercent() > iPercent){
-				if(iPercent<10) cout << "\b";
-				else cout << "\b\b";
-				cout.flush();
+				if (_isatty(_fileno(stdout)))
+				{
+					if(iPercent<10) cout << "\b";
+					else cout << "\b\b";
+					cout.flush();
+				}
 				iPercent=r.getPercent();
 				cout << iPercent;
 				cout.flush();
@@ -253,23 +261,25 @@ int CHardklor2::GoHardklor(CHardklorSetting sett, Spectrum* s){
 		minutes = (int)(i/60);
 		seconds = i - (60*minutes);
 		cout << "Analysis Time:    " << minutes << " minutes, " << seconds << " seconds." << endl;
-
-		if (minutes==0 && seconds==0){
-			cout << "IMPOSSIBLE!!!" << endl;
-		} else if(minutes <=2){
-			cout << "HOLY FRIJOLE!!" << endl;
-		} else if(minutes<=5) {
-			cout << "Like lightning!" << endl;
-		} else if(minutes<=10){
-			cout << "That's pretty damn fast!" << endl;
-		} else if(minutes<=20){
-			cout << "Monkeys calculate faster than that!" << endl;
-		} else if(minutes<=30){
-			cout << "You should have taken a lunch break." << endl;
-		} else if(minutes<=40){
-			cout << "Oi! Too freakin' slow!!" << endl;
-		} else {
-			cout << "You might be able to eek out some better performance by adjusting your parameters." << endl;
+		if (bShowPerformanceHints)
+		{
+			if (minutes==0 && seconds==0){
+				cout << "IMPOSSIBLE!!!" << endl;
+			} else if(minutes <=2){
+				cout << "HOLY FRIJOLE!!" << endl;
+			} else if(minutes<=5) {
+				cout << "Like lightning!" << endl;
+			} else if(minutes<=10){
+				cout << "That's pretty damn fast!" << endl;
+			} else if(minutes<=20){
+				cout << "Monkeys calculate faster than that!" << endl;
+			} else if(minutes<=30){
+				cout << "You should have taken a lunch break." << endl;
+			} else if(minutes<=40){
+				cout << "Oi! Too freakin' slow!!" << endl;
+			} else {
+				cout << "You might be able to eek out some better performance by adjusting your parameters." << endl;
+			}
 		}
 	}
 	return 1;
@@ -512,6 +522,8 @@ bool CHardklor2::MatchSubSpectrum(Spectrum& s, int peakIndex, pepHit& pep){
 	double bestDA;
 	int bestCharge;
 	double bestMass;
+	double bestZeroMass;  // Skyline wants formula for isotope envelope, needs mass offset too
+	const char* bestAveragine = NULL; // Skyline wants formula for isotope envelope
 	vector<int> bestMatchIndex;
 	vector<float> bestMatchPeak;
 	int matchCount;
@@ -592,6 +604,8 @@ bool CHardklor2::MatchSubSpectrum(Spectrum& s, int peakIndex, pepHit& pep){
 					bestCorr=corr;
 					bestMass=model->zeroMass+shft*charges[i];
 					bestCharge=charges[i];
+					bestAveragine = model->averagine;
+					bestZeroMass = model->zeroMass;
 					bestDA=da;
 					bestVariant=(int)v;
 				}
@@ -609,7 +623,6 @@ bool CHardklor2::MatchSubSpectrum(Spectrum& s, int peakIndex, pepHit& pep){
 	if(bestCorr>cs.corr){
 
 		pep.area=(float)bestDA;
-		strcpy(pep.averagine,"");
 		pep.basePeakIndex=0;
 		pep.charge=bestCharge;
 		pep.corr=bestCorr;
@@ -619,6 +632,9 @@ bool CHardklor2::MatchSubSpectrum(Spectrum& s, int peakIndex, pepHit& pep){
 		pep.monoMass=bestMass;
 		pep.intensity=s[peakIndex].intensity;
 		pep.variantIndex=bestVariant;
+		pep.zeroMass = bestZeroMass;
+		memmove(pep.averagine, bestAveragine, AV_FORMULA_BUFFER_LENGTH);
+		pep.isotopeEvidencePeaksCount = static_cast<int>(bestMatchIndex.size());
 
 		//mark which peaks contributed to this analysis
 		for(k=0;k<(int)bestMatchIndex.size();k++){
@@ -640,7 +656,9 @@ double CHardklor2::PeakMatcher(vector<Result>& vMR, Spectrum& s, double lower, d
 
 	vector<float> obs;
 	vector<float> mer;
-				
+	obs.reserve(vMR.size());
+	mer.reserve(vMR.size());
+
 	bool match;
 	bool bMax=false;
 	double corr=0.0;
@@ -742,7 +760,10 @@ double CHardklor2::PeakMatcherB(vector<Result>& vMR, Spectrum& s, double lower, 
 
 	vector<float> obs;
 	vector<float> mer;
-				
+
+	obs.reserve(vMR.size());
+	mer.reserve(vMR.size());
+
 	bool match;
 	bool bMax=false;
 	double corr=0.0;
@@ -827,7 +848,8 @@ void CHardklor2::QuickCharge(Spectrum& s, int index, vector<int>& v){
 	double rawChR;
 	int ch;
 	int charge[1000];
-  float minIntensity=s[index].intensity/4;
+	const Peak_T& indexPeak = s[index];
+  float minIntensity=indexPeak.intensity/4;
 
 	for(i=cs.minCharge;i<=cs.maxCharge;i++) charge[i]=0;
 
@@ -835,7 +857,7 @@ void CHardklor2::QuickCharge(Spectrum& s, int index, vector<int>& v){
 	for(j=index+1;j<s.size();j++){
 		if(s[j].intensity<minIntensity) continue;
 			
-		dif = s[j].mz - s[index].mz;
+		dif = s[j].mz - indexPeak.mz;
 		if(dif > 1.1) break;
 			
 		rawCh=1/dif;
@@ -862,7 +884,7 @@ void CHardklor2::QuickCharge(Spectrum& s, int index, vector<int>& v){
 	for(j=index-1;j>=0;j--){
     if (s[j].intensity<minIntensity) continue;
 			
-		dif = s[index].mz - s[j].mz;
+		dif = indexPeak.mz - s[j].mz;
 		if(dif > 1.1) break;
 			
 		rawCh=1/dif;
@@ -883,7 +905,7 @@ void CHardklor2::QuickCharge(Spectrum& s, int index, vector<int>& v){
 void CHardklor2::QuickHardklor(Spectrum& s, vector<pepHit>& vPeps) {
 
 	//iterators
-	int i,j,k,n,m,x;
+	int i,j,k,n,m=-1,x;
 	size_t varCount;
 	size_t v;
 
@@ -925,7 +947,7 @@ void CHardklor2::QuickHardklor(Spectrum& s, vector<pepHit>& vPeps) {
 	//pepHit bestKeepPH;
 	int lowIndex;
 	int highIndex;
-	bool corr2;
+	bool corr2 = false;
 	double corr3;
 
 	//best hit variables
@@ -933,6 +955,8 @@ void CHardklor2::QuickHardklor(Spectrum& s, vector<pepHit>& vPeps) {
 	double bestLow;
 	double bestHigh;
 	double bestDA;
+	char bestAveragine[AV_FORMULA_BUFFER_LENGTH]; // Skyline wants the isotope envelope info
+	double bestZeroMass; // Skyline wants the isotope envelope info
 	int bestCharge;
 	double bestMass;
 	vector<int> bestMatchIndex;
@@ -977,10 +1001,13 @@ void CHardklor2::QuickHardklor(Spectrum& s, vector<pepHit>& vPeps) {
 		//peaks change in intensity as they are deconvolved. Also it is advantageous
 		//to keep peaks in m/z order
 		max=0.0f;
-		for(i=0;i<s.size();i++){
-			if(s[i].intensity<maxHeight && s[i].intensity>max){
-				max=s[i].intensity;
-				maxIndex=i;
+		vector<Peak_T>& peaks = *s.getPeaks(); // BSP note - swapped in a little C++ voodoo here, as this loop is a performance hotspot
+		const Peak_T* peak0 = &peaks[0];
+		const Peak_T* peak = peak0;
+		for (size_t p = peaks.size(); p--; peak++) {
+			if (peak->intensity > max && peak->intensity < maxHeight) {
+				max= peak->intensity;
+				maxIndex = static_cast<int>(peak - peak0);
 			}
 		}
 
@@ -1063,11 +1090,11 @@ void CHardklor2::QuickHardklor(Spectrum& s, vector<pepHit>& vPeps) {
 
 					//use model library
 					for(k=0; k<model->size; k++) {
-						
-						r.data=model->peaks[k].intensity;
-						r.mass=model->peaks[k].mz+shft;
+						const Peak_T& peak = model->peaks[k];
+						r.data=peak.intensity;
+						r.mass=peak.mz+shft;
 						vMR.push_back(r);
-						if(model->peaks[k].intensity>99.999) thisMaxIndex=(int)vMR.size()-1;
+						if(peak.intensity>99.999) thisMaxIndex=(int)vMR.size()-1;
 					
 						if(r.mass<lower) lower=r.mass;
 						if(r.mass>upper) upper=r.mass;
@@ -1180,12 +1207,14 @@ void CHardklor2::QuickHardklor(Spectrum& s, vector<pepHit>& vPeps) {
 						bestMatchCount=matchCount;
 						bestCorr=corr;
 						bestMass=model->zeroMass+shft*charges[i];
+						bestZeroMass = model->zeroMass;   // Skyline wants the isotope envelope info
+						memmove(bestAveragine, model->averagine, AV_FORMULA_BUFFER_LENGTH);  // Skyline wants the isotope envelope info
 						bestCharge=charges[i];
 						bestDA=da;
 						bestLow=lower;
 						bestHigh=upper;
 						bestKeepPH=keepPH;
-						bestPH=ph2;
+						if (corr2) bestPH=ph2;
 						bestOverlap=m;
 						bestLowIndex=lowIndex;
 						bestHighIndex=highIndex;
@@ -1210,16 +1239,23 @@ void CHardklor2::QuickHardklor(Spectrum& s, vector<pepHit>& vPeps) {
 			ph.lowMZ=bestLow;
 			ph.massShift=0.0;
 			ph.monoMass=bestMass;
+			ph.zeroMass = bestZeroMass;
 			ph.lowIndex=bestLowIndex;
 			ph.highIndex=bestHighIndex;
 			ph.variantIndex=bestVariant;
+			memmove(ph.averagine, bestAveragine, AV_FORMULA_BUFFER_LENGTH);
+			ph.isotopeEvidencePeaksCount = static_cast<int>(bestMatchIndex.size());
+
 			if(bestKeepPH){
 				vPeps[bestOverlap].area=bestPH.area;
 				vPeps[bestOverlap].intensity=bestPH.intensity;
 				vPeps[bestOverlap].corr=bestPH.corr;
 				vPeps[bestOverlap].charge=bestPH.charge;
-				vPeps[bestOverlap].monoMass=bestPH.monoMass;
+				vPeps[bestOverlap].monoMass = bestPH.monoMass;
+				vPeps[bestOverlap].zeroMass = bestPH.zeroMass;
 				vPeps[bestOverlap].variantIndex=bestPH.variantIndex;
+				memmove(vPeps[bestOverlap].averagine, bestPH.averagine, AV_FORMULA_BUFFER_LENGTH);
+				vPeps[bestOverlap].isotopeEvidencePeaksCount = bestPH.isotopeEvidencePeaksCount;
 			}
 			vPeps.push_back(ph);
 			mask[maxIndex].intensity=100.0f;
@@ -1393,6 +1429,12 @@ int CHardklor2::Size(){
 void CHardklor2::WritePepLine(pepHit& ph, Spectrum& s, FILE* fptr, int format){
   int i,j;
 
+	// Reduce output by rejecting anything with less than minIsotopePeaksCount isotope peaks
+	if (ph.isotopeEvidencePeaksCount < cs.minIsotopePeaks)
+	{
+		return;
+	}
+
   if(format==0){
 		fprintf(fptr,"P\t%.4lf",ph.monoMass);
 		fprintf(fptr,"\t%d",ph.charge);
@@ -1421,7 +1463,23 @@ void CHardklor2::WritePepLine(pepHit& ph, Spectrum& s, FILE* fptr, int format){
 			}
 		}
 
-		fprintf(fptr,"\t%.4lf\n",ph.corr);
+		fprintf(fptr, "\t%.4lf", ph.corr);
+
+		if (cs.reportAveragineAndMassOffset)
+		{
+			// Skyline wants to know the chemical formula and mass offset so it can use the same isotope envelope as Hardklor
+			// Encode this as a formula with a mass modification e.g. "H21C14N4O4[+3.038518]", "H21C14N4O4[-0.085518]" etc
+			double massOffset = ph.monoMass - ph.zeroMass;
+			char massShiftStr[60];
+			if (fabs(massOffset) < .00001)
+				massShiftStr[0] = 0;
+			else if (massOffset < 0)
+				snprintf(massShiftStr, 60, "[%.6f]", massOffset);
+			else if (massOffset > 0)
+				snprintf(massShiftStr, 60, "[+%.6f]", massOffset);
+			fprintf(fptr, "\t%s%s", ph.averagine, massShiftStr);
+		}
+		fprintf(fptr, "\n");
 
   } else if(format==1) {
 		/*
@@ -1465,7 +1523,7 @@ void CHardklor2::WritePepLine(pepHit& ph, Spectrum& s, FILE* fptr, int format){
 void CHardklor2::WriteScanLine(Spectrum& s, FILE* fptr, int format){
 
   if(format==0) {
-    fprintf(fptr,"S\t%d\t%.4f\t%s",s.getScanNumber(),s.getRTime(),cs.inFile);
+    fprintf(fptr,"S\t%d\t%.4f\t%s",s.getScanNumber(),s.getRTime(),cs.inFile.c_str());
 
 		//For Alex Panchaud, special ZS case
 		if(s.getFileType()==ZS || s.getFileType()==UZS){
@@ -1489,7 +1547,7 @@ void CHardklor2::WriteScanLine(Spectrum& s, FILE* fptr, int format){
   } else if(format==1){
     fprintf(fptr,"<Spectrum Scan=\"%d\" ",s.getScanNumber());
 		fprintf(fptr,"RetentionTime=\"%.4f\" ",s.getRTime()); 
-		fprintf(fptr,"Filename=\"%s\"",cs.inFile);
+		fprintf(fptr,"Filename=\"%s\"",cs.inFile.c_str());
 		if(s.getFileType()==ZS || s.getFileType()==UZS){
 			if(s.sizeZ()>0){
 				for(int i=0;i<s.sizeZ();i++) fprintf(fptr," PeptideSignal%d=\"%d,%.4lf\"",i,s.atZ(i).z,s.atZ(i).mh);

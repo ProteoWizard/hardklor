@@ -71,7 +71,7 @@ CMercury8::CMercury8(){
   zeroMass=0;
 }
 
-CMercury8::CMercury8(char* fn){
+CMercury8::CMercury8(const char* fn){
   InitializeData(fn);
   showOutput = false;
   bAccMass = false;

@@ -36,7 +36,7 @@ class CHardklorParser {
   void parse(char*);
   bool parseCMD(int argc, char* argv[]);
   bool parseConfig(char*);
-  MSToolkit::MSFileFormat getFileFormat(char* c);
+  MSToolkit::MSFileFormat getFileFormat(const char* c);
   CHardklorSetting& queue(int);
   int size();
 

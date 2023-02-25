@@ -22,7 +22,7 @@ using namespace MSToolkit;
 CNoiseReduction::CNoiseReduction(){
   pos=0;
   posA=0;
-  strcpy(lastFile,"");
+  lastFile="";
 }
 
 CNoiseReduction::CNoiseReduction(MSReader* msr, CHardklorSetting& hs){
@@ -30,7 +30,7 @@ CNoiseReduction::CNoiseReduction(MSReader* msr, CHardklorSetting& hs){
   cs=hs;
   pos=0;
   posA=0;
-  strcpy(lastFile,"");
+  lastFile="";
 }
 
 CNoiseReduction::~CNoiseReduction(){
@@ -435,7 +435,7 @@ int CNoiseReduction::NearestPeak(Spectrum& sp, double mz){
   return best;
 }
 
-bool CNoiseReduction::ScanAverage(Spectrum& sp, char* file, int width, float cutoff){
+bool CNoiseReduction::ScanAverage(Spectrum& sp, std::string file, int width, float cutoff){
   
   Spectrum ts;
   Spectrum ps=sp;
@@ -466,7 +466,7 @@ bool CNoiseReduction::ScanAverage(Spectrum& sp, char* file, int width, float cut
       bLeft=false;
       widthCount++;
       while(posLeft>0){
-        r.readFile(file,ts,posLeft);
+        r.readFile(file.c_str(),ts,posLeft);
         if(ts.getScanNumber()==0) break;
         ts.getRawFilter(cFilter2,256);
         if(strcmp(cFilter1,cFilter2)==0) break;
@@ -476,7 +476,7 @@ bool CNoiseReduction::ScanAverage(Spectrum& sp, char* file, int width, float cut
       bLeft=true;
       widthCount++;
       while(true){
-        r.readFile(file,ts,posRight);
+        r.readFile(file.c_str(),ts,posRight);
         if(ts.getScanNumber()==0) break;
         ts.getRawFilter(cFilter2,256);
         if(strcmp(cFilter1,cFilter2)==0) break;
@@ -534,7 +534,7 @@ bool CNoiseReduction::ScanAverage(Spectrum& sp, char* file, int width, float cut
   return true;
 }
 
-bool CNoiseReduction::NewScanAverage(Spectrum& sp, char* file, int width, float cutoff, int scanNum){
+bool CNoiseReduction::NewScanAverage(Spectrum& sp, std::string file, int width, float cutoff, int scanNum){
   
   Spectrum ts;
 
@@ -567,11 +567,11 @@ bool CNoiseReduction::NewScanAverage(Spectrum& sp, char* file, int width, float 
   specs = new Spectrum[width*2+1];
 
   //if file is not null, create new buffer
-  if(file!=NULL){
-    strcpy(lastFile,file);
+  if(file.length()){
+    lastFile = file;
     bs.clear();
-    if(scanNum>0) r->readFile(file,ts,scanNum);
-    else r->readFile(file,ts);
+    if(scanNum>0) r->readFile(file.c_str(),ts,scanNum);
+    else r->readFile(file.c_str(), ts);
     if(ts.getScanNumber()==0) {
       delete [] specs;
       return false;
@@ -610,7 +610,7 @@ bool CNoiseReduction::NewScanAverage(Spectrum& sp, char* file, int width, float 
           while(true){
             i--;
             if(i==0) break;
-            r->readFile(lastFile,ts,i);
+            r->readFile(lastFile.c_str(),ts,i);
             if(ts.getScanNumber()==0) continue;
             else break;
           }
@@ -640,7 +640,7 @@ bool CNoiseReduction::NewScanAverage(Spectrum& sp, char* file, int width, float 
       while(true){
         posRight++;
         if(posRight>=(int)bs.size()) { //buffer is too short on right, add spectra
-          r->readFile(lastFile,ts,bs[bs.size()-1].getScanNumber());
+          r->readFile(lastFile.c_str(),ts,bs[bs.size()-1].getScanNumber());
           r->readFile(NULL,ts);
           if(ts.getScanNumber()==0) {
             posRight--;
@@ -1145,7 +1145,7 @@ bool CNoiseReduction::ScanAverageBuffered(Spectrum& sp, char* file, int width, f
 }
 */
 
-bool CNoiseReduction::ScanAveragePlusDeNoise(Spectrum& sp, char* file, int width, float cutoff, int scanNum){
+bool CNoiseReduction::ScanAveragePlusDeNoise(Spectrum& sp, std::string file, int width, float cutoff, int scanNum){
   
   Spectrum ts;
   Spectrum ps;
@@ -1175,11 +1175,11 @@ bool CNoiseReduction::ScanAveragePlusDeNoise(Spectrum& sp, char* file, int width
   sp.clear();
 
   //if file is not null, create new buffer
-  if(file!=NULL){
-    strcpy(lastFile,file);
+  if(file.length()){
+    lastFile = file;
     bs.clear();
-    if(scanNum>0) r->readFile(file,ts,scanNum);
-    else r->readFile(file,ts);
+    if(scanNum>0) r->readFile(file.c_str(),ts,scanNum);
+    else r->readFile(file.c_str(),ts);
     if(ts.getScanNumber()==0) return false;
     bs.push_back(ts);
     ps=bs[0];
@@ -1218,7 +1218,7 @@ bool CNoiseReduction::ScanAveragePlusDeNoise(Spectrum& sp, char* file, int width
             i--;
             //cout << "I: " << i << endl;
             if(i==0) break;
-            r->readFile(lastFile,ts,i);
+            r->readFile(lastFile.c_str(),ts,i);
             if(ts.getScanNumber()==0) continue;
             else break;
           }
@@ -1249,7 +1249,7 @@ bool CNoiseReduction::ScanAveragePlusDeNoise(Spectrum& sp, char* file, int width
       while(true){
         posRight++;
         if(posRight>=(int)bs.size()) { //buffer is too short on right, add spectra
-          r->readFile(lastFile,ts,bs[bs.size()-1].getScanNumber());
+          r->readFile(lastFile.c_str(),ts,bs[bs.size()-1].getScanNumber());
           r->readFile(NULL,ts);
           if(ts.getScanNumber()==0) {
             posRight--;
@@ -1441,7 +1441,7 @@ double CNoiseReduction::CParam(Spectrum& sp, int tot){
   else return d/j;
 }
 
-bool CNoiseReduction::NewScanAveragePlusDeNoise(Spectrum& sp, char* file, int width, float cutoff, int scanNum){
+bool CNoiseReduction::NewScanAveragePlusDeNoise(Spectrum& sp, std::string file, int width, float cutoff, int scanNum){
   
   Spectrum ts;
 
@@ -1473,11 +1473,11 @@ bool CNoiseReduction::NewScanAveragePlusDeNoise(Spectrum& sp, char* file, int wi
   specs = new Spectrum[width*2+1];
 
   //if file is not null, create new buffer
-  if(file!=NULL){
-    strcpy(lastFile,file);
+  if(file.length()){
+    lastFile = file;
     bs.clear();
-    if(scanNum>0) r->readFile(file,ts,scanNum);
-    else r->readFile(file,ts);
+    if(scanNum>0) r->readFile(file.c_str(),ts,scanNum);
+    else r->readFile(file.c_str(),ts);
     if(ts.getScanNumber()==0) {
       delete [] specs;
       return false;
@@ -1517,7 +1517,7 @@ bool CNoiseReduction::NewScanAveragePlusDeNoise(Spectrum& sp, char* file, int wi
           while(true){
             i--;
             if(i==0) break;
-            r->readFile(lastFile,ts,i);
+            r->readFile(lastFile.c_str(),ts,i);
             if(ts.getScanNumber()==0) continue;
             else break;
           }
@@ -1547,7 +1547,7 @@ bool CNoiseReduction::NewScanAveragePlusDeNoise(Spectrum& sp, char* file, int wi
       while(true){
         posRight++;
         if(posRight>=(int)bs.size()) { //buffer is too short on right, add spectra
-          r->readFile(lastFile,ts,bs[bs.size()-1].getScanNumber());
+          r->readFile(lastFile.c_str(),ts,bs[bs.size()-1].getScanNumber());
           r->readFile(NULL,ts);
           if(ts.getScanNumber()==0) {
             posRight--;

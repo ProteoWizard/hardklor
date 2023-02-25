@@ -48,7 +48,7 @@ bool CModelLibrary::buildLibrary(int lowCharge, int highCharge, vector<CHardklor
 	Peak_T p;
 	float da;
 	double mass;
-	char av[64];
+	char av[AV_FORMULA_BUFFER_LENGTH];
 
 	if(libModel!=NULL) {
 		cout << "library memory already in use." << endl;
@@ -83,6 +83,7 @@ bool CModelLibrary::buildLibrary(int lowCharge, int highCharge, vector<CHardklor
           mercury->Enrich(pepVariants[j].atEnrich(n).atomNum,pepVariants[j].atEnrich(n).isotope,pepVariants[j].atEnrich(n).ape);
         }
 				mercury->GoMercury(&av[0],i);
+				memmove(libModel[i][j][k].averagine, av, AV_FORMULA_BUFFER_LENGTH);
 
 				vMR.clear();
 				da=0.0f;

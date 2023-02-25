@@ -46,13 +46,13 @@ public:
   bool DeNoiseC(MSToolkit::Spectrum& sp);
   bool DeNoiseD(MSToolkit::Spectrum& sp);
   int NearestPeak(MSToolkit::Spectrum& sp, double mz);
-  bool ScanAverage(MSToolkit::Spectrum& sp, char* file, int width, float cutoff);
-  bool NewScanAverage(MSToolkit::Spectrum& sp, char* file, int width, float cutoff, int scanNum=0);
+  bool ScanAverage(MSToolkit::Spectrum& sp, std::string, int width, float cutoff);
+  bool NewScanAverage(MSToolkit::Spectrum& sp, std::string file, int width, float cutoff, int scanNum=0);
   //bool ScanAverage(Spectrum& sp, vector<Spectrum>& vs, int pivot, float cutoff, double cp=0.0);
   //bool ScanAverage(Spectrum& sp, deque<Spectrum>& vs, int pivot, float cutoff);
   //bool ScanAverageBuffered(Spectrum& sp, char* file, int width, float cutoff, int scanNum=0);
-  bool ScanAveragePlusDeNoise(MSToolkit::Spectrum& sp, char* file, int width, float cutoff, int scanNum=0);
-  bool NewScanAveragePlusDeNoise(MSToolkit::Spectrum& sp, char* file, int width, float cutoff, int scanNum=0);
+  bool ScanAveragePlusDeNoise(MSToolkit::Spectrum& sp, std::string file, int width, float cutoff, int scanNum=0);
+  bool NewScanAveragePlusDeNoise(MSToolkit::Spectrum& sp, std::string file, int width, float cutoff, int scanNum=0);
 
   int pos;
 
@@ -63,7 +63,7 @@ private:
   //Data Members
   //int pos;
   int posA;
-  char lastFile[256];
+  std::string lastFile;
   CHardklorSetting cs;
   MSToolkit::MSReader* r;
   std::deque<MSToolkit::Spectrum> s;

@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
 		cout << "See documentation for instructions to modify and use config files." << endl;
 		exit(1);
 	}
-  
+
   CHardklorParser hp;
   if(strcmp(argv[1],"-cmd")==0){
     if(!hp.parseCMD(argc, argv)){
@@ -62,8 +62,8 @@ int main(int argc, char* argv[]) {
     fptr.close();
   }
 
-	averagine = new CAveragine(hp.queue(0).MercuryFile,hp.queue(0).HardklorFile);
-	mercury = new CMercury8(hp.queue(0).MercuryFile);
+	averagine = new CAveragine(hp.queue(0).MercuryFile.c_str(),hp.queue(0).HardklorFile.c_str());
+	mercury = new CMercury8(hp.queue(0).MercuryFile.c_str());
 	models = new CModelLibrary(averagine,mercury);
 
   CHardklor h(averagine,mercury);

@@ -35,8 +35,7 @@ void CHardklorParser::parse(char* cmd) {
   bool isGlobal=true;
   sMolecule m;
   char *tok;
-  char tmpstr[256];
-	char upStr[64];
+  char* tmpstr = static_cast<char*>(malloc(strlen(cmd) + 1));
   string tstr;
   vector<string> vs;
 
@@ -54,7 +53,7 @@ void CHardklorParser::parse(char* cmd) {
   */
 
 	bool bFile;
-	char param[32];
+	string paramStr;
 
   CHardklorSetting hs;
 
@@ -65,7 +64,11 @@ void CHardklorParser::parse(char* cmd) {
 	//if we have only white space, exit here
 	strcpy(tmpstr,cmd);
 	tok=strtok(tmpstr," \t\n\r");
-	if(tok==NULL) return;
+	if(tok==NULL)
+	{
+		free(tmpstr);
+		return;
+	}
 
 	//Check if we have a parameter (has '=' in it) or a file request.
 	tok=strstr(cmd,"=");
@@ -92,13 +95,14 @@ void CHardklorParser::parse(char* cmd) {
 					exit(-1);
 				}
 				if(tmpstr[j]=='\"') break;
+				j++;
 			}
 			tmpstr[j]='\0';
-			strcpy(hs.inFile,&tmpstr[1]);
+			hs.inFile = &tmpstr[1];
 			j++;
 		} else {
 			tok=strtok(tmpstr," \t\n\r");
-			strcpy(hs.inFile,tmpstr);
+			hs.inFile = tmpstr;
 			j=(int)strlen(tmpstr);
 		}
 
@@ -125,30 +129,36 @@ void CHardklorParser::parse(char* cmd) {
 					exit(-1);
 				}
 				if(tmpstr[j]=='\"') break;
+				j++;
 			}
 			tmpstr[j]='\0';
-			strcpy(hs.outFile,&tmpstr[1]);
+			hs.outFile = &tmpstr[1];
 			j++;
 		} else {
 			tok=strtok(tmpstr," \t\n\r");
-			strcpy(hs.outFile,tmpstr);
+			hs.outFile=tmpstr;
 			j=(int)strlen(tmpstr);
 		}
 
 		//cout << hs.inFile << "\t" << hs.outFile << endl;
 
-		hs.fileFormat = getFileFormat(hs.inFile);
+		hs.fileFormat = getFileFormat(hs.inFile.c_str());
 		vQueue->push_back(hs);
+		free(tmpstr);
 		return;
 	}
+	free(tmpstr);
 
+	char* upStr = static_cast<char*>(malloc(strlen(cmd) + 1));
 	//Read parameter
 	tok=strtok(cmd," \t=\n\r");
 	if(tok==NULL) return;
-	strcpy(param,tok);
+	paramStr=tok;
+	const char* param = paramStr.c_str();
 	tok=strtok(NULL," \t=\n\r");
 	if(tok==NULL) {
 		warn(param,0);
+		free(upStr);
 		return;
 	}
 
@@ -224,7 +234,7 @@ void CHardklorParser::parse(char* cmd) {
 		else global.distArea=false;
 
 	} else if(strcmp(param,"hardklor_data")==0){
-		strcpy(global.HardklorFile,tok);
+		global.HardklorFile = tok;
 
 	} else if(strcmp(param,"instrument")==0){
 		for(j=0;j<(int)strlen(tok);j++) upStr[j]=toupper(tok[j]);
@@ -239,8 +249,15 @@ void CHardklorParser::parse(char* cmd) {
 		}
 
 	} else if(strcmp(param,"isotope_data")==0){
-    strcpy(global.MercuryFile,tok);
-
+		global.MercuryFile = tok;
+		if (global.MercuryFile[0]=='\"')
+		{
+			// Remove quotes
+			global.MercuryFile =  global.MercuryFile.substr(1, global.MercuryFile.length()-2);
+		}
+	}
+	else if (strcmp(param, "isotope_peaks_min") == 0) {
+		global.minIsotopePeaks = atoi(tok); // Must identify at least this many isotope peaks in a feature for it to be included in report
 	} else if(strcmp(param,"max_features")==0){
 
   } else if(strcmp(param,"molecule_max_mz")==0){
@@ -270,6 +287,11 @@ void CHardklorParser::parse(char* cmd) {
 	} else if(strcmp(param,"resolution")==0){
 		global.res400=atof(tok);
 
+	} else if (strcmp(param, "report_averagine")==0){
+		global.reportAveragineAndMassOffset = atoi(tok);
+		if (global.reportAveragineAndMassOffset)
+			cout << std::endl << "Note: generated averagine formulas are for isotope envelope approximation only and do not represent actual molecule identifications.\n" << endl;
+
 	} else if(strcmp(param,"scan_range_max")==0){
 		global.scan.iUpper=atoi(tok);
 
@@ -297,7 +319,7 @@ void CHardklorParser::parse(char* cmd) {
 	} else {
 		warn(param,1);
 	}
-
+	free(upStr);
 }
 
 bool CHardklorParser::parseCMD(int argc, char* argv[]){
@@ -359,25 +381,29 @@ int CHardklorParser::size(){
 }
 
 //Identifies file format from extension - Must conform to these conventions
-MSFileFormat CHardklorParser::getFileFormat(char* c){
+MSFileFormat CHardklorParser::getFileFormat(const char* c){
 
-	char file[256];
-	char ext[256];
+	char *file = static_cast<char*>(malloc(strlen(c) + 1));
+	std::string extStr;
 	char *tok;
 
 	strcpy(file,c);
 	tok=strtok(file,".\n\r");
 	while(tok!=NULL){
-		strcpy(ext,tok);
+		extStr = tok;
 		tok=strtok(NULL,".\n\r");
 	}
+	const char* ext = extStr.c_str();
+	free(file);
 
 	if(strcmp(ext,"ms1")==0 || strcmp(ext,"MS1")==0) return ms1;
 	if(strcmp(ext,"ms2")==0 || strcmp(ext,"MS2")==0) return ms2;
 	if(strcmp(ext,"bms1")==0 || strcmp(ext,"BMS1")==0) return bms1;
 	if(strcmp(ext,"bms2")==0 || strcmp(ext,"BMS2")==0) return bms2;
+#ifndef _NO_CMS
 	if(strcmp(ext,"cms1")==0 || strcmp(ext,"CMS1")==0) return cms1;
 	if(strcmp(ext,"cms2")==0 || strcmp(ext,"CMS2")==0) return cms2;
+#endif
 	if(strcmp(ext,"zs")==0 || strcmp(ext,"ZS")==0) return zs;
 	if(strcmp(ext,"uzs")==0 || strcmp(ext,"UZS")==0) return uzs;
 	if(strcmp(ext,"mzML")==0 || strcmp(ext,"MZML")==0) return mzML;
@@ -421,7 +447,7 @@ bool CHardklorParser::makeVariant(char* c){
   strcpy(str,c);
 
   v.clear();
-  PT = new CPeriodicTable(global.HardklorFile);  
+  PT = new CPeriodicTable(global.HardklorFile.c_str());  
 
   tok=strtok(str," \n\r");  
   while(tok!=NULL){

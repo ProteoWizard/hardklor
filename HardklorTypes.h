@@ -22,6 +22,8 @@ limitations under the License.
 #include <string>
 #include <vector>
 
+#define AV_FORMULA_BUFFER_LENGTH 64
+
 enum specType {
 	OrbiTrap,
 	TOF,
@@ -129,7 +131,9 @@ typedef struct pepHit{
 	double highMZ;
 	double monoMass;
 	double corr;
-	char averagine[32];
+	double zeroMass; // Skyline wants to know mass shift
+	char averagine[AV_FORMULA_BUFFER_LENGTH]; // Skyline wants to know isotope envelope
+	int isotopeEvidencePeaksCount;  // For optionally rejecting features with too few isotope peaks
 } pepHit;
 
 typedef struct mercuryModel{
@@ -137,6 +141,7 @@ typedef struct mercuryModel{
 	int size;
 	double zeroMass;
 	MSToolkit::Peak_T* peaks;
+	char averagine[AV_FORMULA_BUFFER_LENGTH];
 } mercuryModel;
 
 //for storing results to memory for modular Hardklor runs

@@ -34,10 +34,6 @@ CHardklorSetting::CHardklorSetting(){
   scan.iUpper=0;
   window.dLower=0;
   window.dUpper=0;
-  strcpy(inFile,"");
-  strcpy(outFile,"");
-	strcpy(MercuryFile,"");
-  strcpy(HardklorFile,"");
 	algorithm=FastFewestPeptides;
 	variant = new vector<CHardklorVariant>;
 
@@ -75,6 +71,8 @@ CHardklorSetting::CHardklorSetting(){
 
   maxMolMZ=5000;
 
+  minIsotopePeaks = 1; // Don't report features unless they have at least this many isotope peaks identified
+
   strcpy(rawFilter,"");
 }
 
@@ -100,10 +98,10 @@ CHardklorSetting::CHardklorSetting(const CHardklorSetting& c){
   scan.iUpper=c.scan.iUpper;
   window.dLower=c.window.dLower;
   window.dUpper=c.window.dUpper;
-  strcpy(inFile,c.inFile);
-  strcpy(outFile,c.outFile);
-  strcpy(MercuryFile,c.MercuryFile);
-  strcpy(HardklorFile,c.HardklorFile);
+  inFile=c.inFile;
+  outFile=c.outFile;
+  MercuryFile=c.MercuryFile;
+  HardklorFile=c.HardklorFile;
 	algorithm=c.algorithm;
 	msType=c.msType;
 	res400=c.res400;
@@ -168,10 +166,10 @@ CHardklorSetting& CHardklorSetting::operator=(const CHardklorSetting& c){
     scan.iUpper=c.scan.iUpper;
     window.dLower=c.window.dLower;
     window.dUpper=c.window.dUpper;
-    strcpy(inFile,c.inFile);
-    strcpy(outFile,c.outFile);
-    strcpy(MercuryFile,c.MercuryFile);
-    strcpy(HardklorFile,c.HardklorFile);
+	inFile = c.inFile;
+	outFile = c.outFile;
+	MercuryFile = c.MercuryFile;
+	HardklorFile = c.HardklorFile;
 		algorithm=c.algorithm;
 		msType=c.msType;
 		res400=c.res400;

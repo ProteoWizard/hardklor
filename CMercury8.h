@@ -75,7 +75,7 @@ class CMercury8 {
 
   //Constructors & Destructors:
   CMercury8();
-  CMercury8(char *fn);
+  CMercury8(const char *fn);
   ~CMercury8();
 
   //Functions:

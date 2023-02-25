@@ -33,7 +33,8 @@ limitations under the License.
 #include "CModelLibrary.h"
 
 #ifdef _MSC_VER
-
+#include <Windows.h>
+#include <profileapi.h>
 #else
 #include <sys/time.h>
 #endif
@@ -72,7 +73,8 @@ class CHardklor2{
   void    RefineHits(std::vector<pepHit>& vPeps, MSToolkit::Spectrum& s);
   void    ResultToMem(pepHit& ph, MSToolkit::Spectrum& s);
   void    WritePepLine(pepHit& ph, MSToolkit::Spectrum& s, FILE* fptr, int format=0); 
-  void    WriteScanLine(MSToolkit::Spectrum& s, FILE* fptr, int format=0); 
+  void    WriteScanLine(MSToolkit::Spectrum& s, FILE* fptr, int format=0);
+  void    SetIonFormula(pepHit& pep, const char* bestAveragine, double bestMass, double bestZeroMass, int bestCharge); // BSP edit, SKyline wants isotope envelope info
 
   static int CompareBPI(const void *p1, const void *p2);
 
@@ -85,6 +87,7 @@ class CHardklor2{
   MSToolkit::Spectrum mask;
   hkMem               hkm;
   bool                bEcho;
+  bool                bShowPerformanceHints;
   bool                bMem;
   int                 currentScanNumber;
 
