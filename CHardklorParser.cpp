@@ -54,6 +54,7 @@ void CHardklorParser::parse(char* cmd) {
 
 	bool bFile;
 	string paramStr;
+	string quotedArg;
 
   CHardklorSetting hs;
 
@@ -147,6 +148,20 @@ void CHardklorParser::parse(char* cmd) {
 		free(tmpstr);
 		return;
 	}
+	else
+	{
+	    // May still need to unquote an argument
+		const char* quote = strstr(cmd, "\"");
+		if (quote != NULL)
+		{
+			const char *endQuote = strstr(quote+1, "\"");
+			if (endQuote != NULL)
+			{
+				string q = quote;
+				quotedArg = q.substr(1, (endQuote-quote)-1);
+			}
+		}
+	}
 	free(tmpstr);
 
 	char* upStr = static_cast<char*>(malloc(strlen(cmd) + 1));
@@ -234,7 +249,7 @@ void CHardklorParser::parse(char* cmd) {
 		else global.distArea=false;
 
 	} else if(strcmp(param,"hardklor_data")==0){
-		global.HardklorFile = tok;
+		global.HardklorFile = quotedArg.empty() ? tok : quotedArg.c_str();
 
 	} else if(strcmp(param,"instrument")==0){
 		for(j=0;j<(int)strlen(tok);j++) upStr[j]=toupper(tok[j]);
@@ -249,7 +264,7 @@ void CHardklorParser::parse(char* cmd) {
 		}
 
 	} else if(strcmp(param,"isotope_data")==0){
-		global.MercuryFile = tok;
+		global.MercuryFile = quotedArg.empty() ? tok : quotedArg.c_str();
 		if (global.MercuryFile[0]=='\"')
 		{
 			// Remove quotes
