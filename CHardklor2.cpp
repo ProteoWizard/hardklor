@@ -58,6 +58,7 @@ int CHardklor2::GoHardklor(CHardklorSetting sett, Spectrum* s){
 	int TotalScans;
 	int manyPep, zeroPep, lowSigPep;
 	int iPercent;
+	bool console;
 	int minutes, seconds;
 	int i;
 	vector<pepHit> vPeps;
@@ -150,7 +151,12 @@ int CHardklor2::GoHardklor(CHardklorSetting sett, Spectrum* s){
   }
 
 	//Output progress indicator
-	if(bEcho) cout << iPercent;
+	if(bEcho)
+	{
+		console = _isatty(_fileno(stdout));
+		if (console)
+			cout << iPercent;
+	}
   
   //While there is still data to read in the file.
   while(true){
@@ -186,15 +192,21 @@ int CHardklor2::GoHardklor(CHardklorSetting sett, Spectrum* s){
 
 		//Update progress
 		if(bEcho){
-			if (r.getPercent() > iPercent){
-				if (_isatty(_fileno(stdout)))
+			int pctCurrent = r.getPercent();
+			if (pctCurrent > iPercent){
+				if (console)
 				{
 					if(iPercent<10) cout << "\b";
 					else cout << "\b\b";
 					cout.flush();
+					iPercent = pctCurrent;
+					cout << iPercent;
 				}
-				iPercent=r.getPercent();
-				cout << iPercent;
+				else
+				{
+					iPercent=pctCurrent;
+					cout << iPercent << "%\n";
+				}
 				cout.flush();
 			}
 		}
