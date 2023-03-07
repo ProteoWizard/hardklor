@@ -94,7 +94,6 @@ CHardklor::CHardklor(){
 	averagine=NULL;
 	mercury=NULL;
 	bEcho=true;
-	bShowPerformanceHints=true;
   bMem=false;
 }
 
@@ -104,7 +103,6 @@ CHardklor::CHardklor(CAveragine *a, CMercury8 *m){
   sa.setAveragine(averagine);
   sa.setMercury(mercury);
 	bEcho=true;
-	bShowPerformanceHints = true;
   bMem=false;
 }
 
@@ -113,12 +111,8 @@ CHardklor::~CHardklor(){
 	mercury=NULL;
 }
 
-void CHardklor::Echo(bool b) {
-	bEcho = b;
-}
-
-void CHardklor::ShowPerformanceHints(bool b) {
-	bShowPerformanceHints = b;
+void CHardklor::Echo(bool b){
+	bEcho=b;
 }
 
 void CHardklor::SetAveragine(CAveragine *a){
@@ -133,7 +127,6 @@ void CHardklor::SetMercury(CMercury8 *m){
 
 int CHardklor::GoHardklor(CHardklorSetting sett, Spectrum* s){
 	cs = sett;
-	ShowPerformanceHints(!cs.reportAveragineAndMassOffset); // Skyline doesn't want the performance suggestions
   Analyze(s);
   return 0;
 }
@@ -412,12 +405,9 @@ void CHardklor::Analyze(Spectrum* s) {
     //Update the percentage indicator
 		if(bEcho){
 			if (r.getPercent() > iPercent){
-				if (_isatty(_fileno(stdout)))
-				{
-					if (iPercent < 10) cout << "\b";
-					else cout << "\b\b";
-					cout.flush();
-				}
+				if(iPercent<10) cout << "\b";
+				else cout << "\b\b";
+				cout.flush();
 				iPercent=r.getPercent();
 				cout << iPercent;
 				cout.flush();
@@ -498,25 +488,23 @@ void CHardklor::Analyze(Spectrum* s) {
 		minutes = (int)(i/60);
 		seconds = i - (60*minutes);
 		cout << "Analysis Time:    " << minutes << " minutes, " << seconds << " seconds." << endl;
-		if (bShowPerformanceHints)
-		{
-			if (minutes==0 && seconds==0){
-				cout << "IMPOSSIBLE!!!" << endl;
-			} else if(minutes <=2){
-				cout << "HOLY FRIJOLE!!" << endl;
-			} else if(minutes<=5) {
-				cout << "Like lightning!" << endl;
-			} else if(minutes<=10){
-				cout << "That's pretty damn fast!" << endl;
-			} else if(minutes<=20){
-				cout << "Monkeys calculate faster than that!" << endl;
-			} else if(minutes<=30){
-				cout << "You should have taken a lunch break." << endl;
-			} else if(minutes<=40){
-				cout << "Oi! Too freakin' slow!!" << endl;
-			} else {
-				cout << "You might be able to eek out some better performance by adjusting your parameters." << endl;
-			}
+
+		if (minutes==0 && seconds==0){
+			cout << "IMPOSSIBLE!!!" << endl;
+		} else if(minutes <=2){
+			cout << "HOLY FRIJOLE!!" << endl;
+		} else if(minutes<=5) {
+			cout << "Like lightning!" << endl;
+		} else if(minutes<=10){
+			cout << "That's pretty damn fast!" << endl;
+		} else if(minutes<=20){
+			cout << "Monkeys calculate faster than that!" << endl;
+		} else if(minutes<=30){
+			cout << "You should have taken a lunch break." << endl;
+		} else if(minutes<=40){
+			cout << "Oi! Too freakin' slow!!" << endl;
+		} else {
+			cout << "You might be able to eek out some better performance by adjusting your parameters." << endl;
 		}
 	}
 
