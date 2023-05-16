@@ -70,8 +70,9 @@ CHardklorSetting::CHardklorSetting(){
   //rawAvgCutoff=1000;
 
   maxMolMZ=5000;
+  reportAveragineAndMassOffset = false; // For Skyline use, when true include averagine values in output report
 
-  minIsotopePeaks = 1; // Don't report features unless they have at least this many isotope peaks identified
+  minIsotopePeaks = 1; // For Skyline use, don't report features unless they have at least this many isotope peaks identified
 
   strcpy(rawFilter,"");
 }
@@ -136,6 +137,8 @@ CHardklorSetting::CHardklorSetting(const CHardklorSetting& c){
   //rawAvgCutoff=c.rawAvgCutoff;
 
   maxMolMZ=c.maxMolMZ;
+  reportAveragineAndMassOffset = c.reportAveragineAndMassOffset; // For Skyline use, when true include averagine values in output report
+  minIsotopePeaks = c.minIsotopePeaks; // For Skyline use, don't report features unless they have at least this many isotope peaks identified
 
   strcpy(rawFilter,c.rawFilter);
 }
@@ -203,6 +206,8 @@ CHardklorSetting& CHardklorSetting::operator=(const CHardklorSetting& c){
     //rawAvgWidth=c.rawAvgWidth;
     //rawAvgCutoff=c.rawAvgCutoff;
     maxMolMZ = c.maxMolMZ;
+    reportAveragineAndMassOffset = c.reportAveragineAndMassOffset; // For Skyline use, when true include averagine values in output report
+    minIsotopePeaks = c.minIsotopePeaks; // For Skyline use, don't report features unless they have at least this many isotope peaks identified
 
     strcpy(rawFilter,c.rawFilter);
   }
