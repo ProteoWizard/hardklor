@@ -61,7 +61,6 @@ class CHardklorSetting {
   int depth;        //maximum number of overlapping peptides
   int maxCharge;    //max charge state to search for
   int minCharge;    //min charge state to search for
-  int minIsotopePeaks; //  For Skyline use - must identify at least this many isotope peaks in a feature for it to be included in report
   int msLevel;      //integer representation of the scan level
   int peptide;			//maximum peptide models to analyze at a single time
   //int ppMatch;      //pre-processing matches. m/z must be observed this amount across ppWin

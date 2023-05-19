@@ -270,9 +270,6 @@ void CHardklorParser::parse(char* cmd) {
 			// Remove quotes
 			global.MercuryFile =  global.MercuryFile.substr(1, global.MercuryFile.length()-2);
 		}
-	}
-	else if (strcmp(param, "isotope_peaks_min") == 0) {
-		global.minIsotopePeaks = atoi(tok); // Must identify at least this many isotope peaks in a feature for it to be included in report
 	} else if(strcmp(param,"max_features")==0){
 
   } else if(strcmp(param,"molecule_max_mz")==0){
@@ -302,7 +299,7 @@ void CHardklorParser::parse(char* cmd) {
 	} else if(strcmp(param,"resolution")==0){
 		global.res400=atof(tok);
 
-	} else if (strcmp(param, "report_averagine")==0){
+	} else if (strcmp(param, "report_averagine")==0){ // Used by Skyline
 		global.reportAveragineAndMassOffset = atoi(tok);
 		if (global.reportAveragineAndMassOffset)
 			cout << std::endl << "Note: generated averagine formulas are for isotope envelope approximation only and do not represent actual molecule identifications.\n" << endl;

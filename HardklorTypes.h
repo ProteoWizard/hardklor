@@ -133,7 +133,6 @@ typedef struct pepHit{
 	double corr;
 	double zeroMass; // Skyline wants to know mass shift
 	char averagine[AV_FORMULA_BUFFER_LENGTH]; // Skyline wants to know isotope envelope
-	int isotopeEvidencePeaksCount;  // For optionally rejecting features with too few isotope peaks
 } pepHit;
 
 typedef struct mercuryModel{

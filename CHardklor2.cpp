@@ -646,7 +646,6 @@ bool CHardklor2::MatchSubSpectrum(Spectrum& s, int peakIndex, pepHit& pep){
 		pep.variantIndex=bestVariant;
 		pep.zeroMass = bestZeroMass;
 		memmove(pep.averagine, bestAveragine, AV_FORMULA_BUFFER_LENGTH);
-		pep.isotopeEvidencePeaksCount = static_cast<int>(bestMatchIndex.size());
 
 		//mark which peaks contributed to this analysis
 		for(k=0;k<(int)bestMatchIndex.size();k++){
@@ -1256,7 +1255,6 @@ void CHardklor2::QuickHardklor(Spectrum& s, vector<pepHit>& vPeps) {
 			ph.highIndex=bestHighIndex;
 			ph.variantIndex=bestVariant;
 			memmove(ph.averagine, bestAveragine, AV_FORMULA_BUFFER_LENGTH);
-			ph.isotopeEvidencePeaksCount = static_cast<int>(bestMatchIndex.size());
 
 			if(bestKeepPH){
 				vPeps[bestOverlap].area=bestPH.area;
@@ -1267,7 +1265,6 @@ void CHardklor2::QuickHardklor(Spectrum& s, vector<pepHit>& vPeps) {
 				vPeps[bestOverlap].zeroMass = bestPH.zeroMass;
 				vPeps[bestOverlap].variantIndex=bestPH.variantIndex;
 				memmove(vPeps[bestOverlap].averagine, bestPH.averagine, AV_FORMULA_BUFFER_LENGTH);
-				vPeps[bestOverlap].isotopeEvidencePeaksCount = bestPH.isotopeEvidencePeaksCount;
 			}
 			vPeps.push_back(ph);
 			mask[maxIndex].intensity=100.0f;
@@ -1440,12 +1437,6 @@ int CHardklor2::Size(){
 
 void CHardklor2::WritePepLine(pepHit& ph, Spectrum& s, FILE* fptr, int format){
   int i,j;
-
-	// Reduce output by rejecting anything with less than minIsotopePeaksCount isotope peaks
-	if (ph.isotopeEvidencePeaksCount < cs.minIsotopePeaks)
-	{
-		return;
-	}
 
   if(format==0){
 		fprintf(fptr,"P\t%.4lf",ph.monoMass);
