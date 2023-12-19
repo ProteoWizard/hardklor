@@ -294,6 +294,7 @@ int CHardklor2::GoHardklor(CHardklorSetting sett, Spectrum* s){
 			}
 		}
 	}
+
 	return 1;
 
 }

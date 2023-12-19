@@ -55,6 +55,9 @@ void CHardklorParser::parse(char* cmd) {
 	bool bFile;
 	string paramStr;
 	string quotedArg;
+char* cmd_bak = static_cast<char*>(malloc(strlen(cmd) + 1));
+  //make a backup of the command in case it contains something silly, like a '#' in the file name.
+  strcpy(cmd_bak,cmd);
 
   CHardklorSetting hs;
 
@@ -68,6 +71,7 @@ void CHardklorParser::parse(char* cmd) {
 	if(tok==NULL)
 	{
 		free(tmpstr);
+		free(cmd_bak);
 		return;
 	}
 
@@ -83,7 +87,7 @@ void CHardklorParser::parse(char* cmd) {
 		       
 		//on systems that allow a space in the path, require quotes (") to capture
     //complete file name
-    strcpy(tmpstr,cmd);
+    strcpy(tmpstr,cmd_bak);
 
     //Check for quote
     if(tmpstr[0]=='\"'){
@@ -109,15 +113,15 @@ void CHardklorParser::parse(char* cmd) {
 
 		//Find first non-whitespace
 		while(true){
-			if(j>=(int)strlen(cmd)){
+			if(j>=(int)strlen(cmd_bak)){
 				cout << "Invalid output file." << endl;
 				exit(-1);
 			}
-			if(cmd[j]!=' ' && cmd[j]!='\t') break;
+			if(cmd_bak[j]!=' ' && cmd_bak[j]!='\t') break;
 			j++;
 		}
 
-		strcpy(tmpstr,&cmd[j]);
+		strcpy(tmpstr,&cmd_bak[j]);
 
     //Check for quote
     if(tmpstr[0]=='\"'){
@@ -146,12 +150,13 @@ void CHardklorParser::parse(char* cmd) {
 		hs.fileFormat = getFileFormat(hs.inFile.c_str());
 		vQueue->push_back(hs);
 		free(tmpstr);
+		free(cmd_bak);
 		return;
 	}
 	else
 	{
 	    // May still need to unquote an argument
-		const char* quote = strstr(cmd, "\"");
+		const char* quote = strstr(cmd_bak, "\"");
 		if (quote != NULL)
 		{
 			const char *endQuote = strstr(quote+1, "\"");
@@ -163,7 +168,8 @@ void CHardklorParser::parse(char* cmd) {
 		}
 	}
 	free(tmpstr);
-
+	free(cmd_bak);
+	
 	char* upStr = static_cast<char*>(malloc(strlen(cmd) + 1));
 	//Read parameter
 	tok=strtok(cmd," \t=\n\r");
