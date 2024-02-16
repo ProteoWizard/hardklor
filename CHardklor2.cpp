@@ -1440,7 +1440,10 @@ void CHardklor2::WritePepLine(pepHit& ph, Spectrum& s, FILE* fptr, int format){
   int i,j;
 
   if(format==0){
-		fprintf(fptr,"P\t%.4lf",ph.monoMass);
+		if (cs.reportAveragineAndMassOffset)
+		  fprintf(fptr, "P\t%.6lf", ph.monoMass); // Skyline would like a bit more detail
+		else
+		  fprintf(fptr, "P\t%.4lf", ph.monoMass);
 		fprintf(fptr,"\t%d",ph.charge);
 		if(cs.distArea) fprintf(fptr,"\t%.0f",ph.area*ph.intensity);
 		else fprintf(fptr,"\t%.0f",ph.intensity);
