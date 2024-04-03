@@ -661,7 +661,16 @@ double CHardklor::LinReg(float *match, float *mismatch){
     syy += (v.at(i).fUpper*v.at(i).fUpper);
   }
 
-  if(sxx>0 && syy>0 && sxy>0) return sxy/sqrt(sxx*syy);
+  if (sxx > 0 && syy > 0 && sxy > 0)
+  {
+      if (cs.reportAveragineAndMassOffset)
+      {
+          // Skyline usage - prefer normalized contrast angle
+          double angle = sxy / sqrt(sxx * syy);
+          return 1.0 - (acos(min(angle, 1.0)) * 2 / PI);
+      }
+      return sxy / sqrt(sxx * syy);
+  }
   else return 0;
     
 }
