@@ -110,9 +110,19 @@ int CHardklor2::GoHardklor(CHardklorSetting sett, Spectrum* s){
     curSpec=*s;
   } else {
 	  if(cs.boxcar==0){
-      if((cs.scan.iLower>0) && (cs.scan.iLower==cs.scan.iUpper)) r.readFile(&cs.inFile[0],curSpec,cs.scan.iLower);
-      else if(cs.scan.iLower>0) r.readFile(&cs.inFile[0],curSpec,cs.scan.iLower);
-	    else r.readFile(&cs.inFile[0],curSpec);
+			if (cs.scan.iLower > 0) {
+				int scn = cs.scan.iLower;
+				r.readFile(&cs.inFile[0], curSpec, scn);
+				while (curSpec.getScanNumber() == 0) {
+					scn++;
+					if (cs.scan.iUpper > 0) {
+						if (scn > cs.scan.iUpper) break;
+					} else {
+						if (scn > r.getLastScan()) break;
+					}
+					r.readFile(NULL, curSpec, scn);
+				}
+			} else r.readFile(&cs.inFile[0], curSpec);
 	  } else {
 		  if(cs.boxcarFilter==0){
         if(!nr.DeNoiseD(curSpec)) curSpec.setScanNumber(0);
@@ -915,7 +925,6 @@ void CHardklor2::QuickCharge(Spectrum& s, int index, vector<int>& v){
 }
 
 void CHardklor2::QuickHardklor(Spectrum& s, vector<pepHit>& vPeps) {
-
 	//iterators
 	int i,j,k,n,m=-1,x;
 	size_t varCount;
@@ -996,6 +1005,7 @@ void CHardklor2::QuickHardklor(Spectrum& s, vector<pepHit>& vPeps) {
 	//find lowest intensity;
 	for(i=0;i<s.size();i++){
     //printf("%.6lf\t%.1f\n",s[i].mz, s[i].intensity);
+		if(s[i].intensity<1) continue; //zero is not allowed as a low point
 		if(s[i].intensity<lowPoint) lowPoint=s[i].intensity;
 	}
 

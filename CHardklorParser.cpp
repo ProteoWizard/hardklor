@@ -58,6 +58,10 @@ void CHardklorParser::parse(char* cmd) {
 char* cmd_bak = static_cast<char*>(malloc(strlen(cmd) + 1));
   //make a backup of the command in case it contains something silly, like a '#' in the file name.
   strcpy(cmd_bak,cmd);
+  char cmd_bak[4096];
+
+  //make a backup of the command in case it contains something silly, like a '#' in the file name.
+  strcpy(cmd_bak,cmd);
 
   CHardklorSetting hs;
 
