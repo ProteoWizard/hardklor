@@ -180,8 +180,10 @@ bool CKronik2::processHK(char*  in, char* out) {
 
     if(tag=='S') {
 			if(firstScan) firstScan=false;
-			else allScans.push_back(scan);	
+			else allScans.push_back(scan);
 			scan.clear();
+			scan.scanWinLower=0;
+			scan.scanWinUpper=0;
 			fgets(line,256,hkr);
 			tok=strtok(line,"\t\n");
 			scan.scanNum=atoi(tok);
@@ -189,6 +191,26 @@ bool CKronik2::processHK(char*  in, char* out) {
 			scan.rTime=(float)atof(tok);
 			tok=strtok(NULL,"\t\n");
 			strcpy(scan.file,tok);
+			//Parse any remaining tokens looking for scan window bounds
+			//Format: S\tscanNum\trTime\tfile\t[precursorInfo...]\tscanWinLower\tscanWinUpper
+			//The last two numeric tokens (if present) are the scan window bounds
+			char* lastTok=NULL;
+			char* prevTok=NULL;
+			tok=strtok(NULL,"\t\n");
+			while(tok!=NULL){
+				prevTok=lastTok;
+				lastTok=tok;
+				tok=strtok(NULL,"\t\n");
+			}
+			//If we found at least two extra tokens, check if they look like scan window bounds
+			if(prevTok!=NULL && lastTok!=NULL){
+				double val1=atof(prevTok);
+				double val2=atof(lastTok);
+				if(val1>0 && val2>0 && val2>val1 && (val2-val1)<=MAX_SIM_WINDOW_MZ){
+					scan.scanWinLower=val1;
+					scan.scanWinUpper=val2;
+				}
+			}
       //fscanf(hkr,"\t%d\t%f%s\n",&scan.scanNum,&scan.rTime,scan.file);
 		} else {
 			pepCount++;
@@ -200,6 +222,15 @@ bool CKronik2::processHK(char*  in, char* out) {
 	fclose(hkr);
 
   cout << pepCount << " peptides from " << allScans.size() << " scans." << endl;
+
+  //Detect SIM mode: check if any scan has a narrow window (width <= 500 m/z)
+  bool bSimData=false;
+  for(i=0;i<allScans.size();i++){
+    if(allScans[i].scanWinUpper>0 && (allScans[i].scanWinUpper-allScans[i].scanWinLower)<=MAX_SIM_WINDOW_MZ){
+      bSimData=true;
+      break;
+    }
+  }
 
   //for(i=0;i<allScans.size();i++) allScans[i].sortIntRev();
 	for(i=0;i<allScans.size();i++) allScans[i].sortMonoMass();
@@ -243,6 +274,14 @@ bool CKronik2::processHK(char*  in, char* out) {
     gap=0;
 		i=sIndex-1;
     while(i>-1 && gap<=iGapTol){
+      //SIM-aware: skip scans whose window doesn't cover this feature's m/z
+      if(bSimData && allScans[i].scanWinUpper>0){
+        double featureMZ=(mass+charge*1.00727649)/charge;
+        if(featureMZ<allScans[i].scanWinLower || featureMZ>allScans[i].scanWinUpper){
+          i--;
+          continue;
+        }
+      }
       bMatch=false;
       t.scan=i;
 			t.pep=binarySearch(allScans,i,mass,charge);
@@ -260,7 +299,15 @@ bool CKronik2::processHK(char*  in, char* out) {
     vRight.clear();
     gap=0;
     i=sIndex+1;
-    while(i<allScans.size() && gap<=iGapTol){    
+    while(i<allScans.size() && gap<=iGapTol){
+      //SIM-aware: skip scans whose window doesn't cover this feature's m/z
+      if(bSimData && allScans[i].scanWinUpper>0){
+        double featureMZ=(mass+charge*1.00727649)/charge;
+        if(featureMZ<allScans[i].scanWinLower || featureMZ>allScans[i].scanWinUpper){
+          i++;
+          continue;
+        }
+      }
       bMatch=false;
       t.scan=i;
 			t.pep=binarySearch(allScans,i,mass,charge);

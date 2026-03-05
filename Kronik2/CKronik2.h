@@ -8,6 +8,7 @@ using namespace std;
 
 #define FWHMCONST 2.3548200450309493820231386529194
 #define SQRTTWO 1.4142135623730950488016887242097
+#define MAX_SIM_WINDOW_MZ 500.0  // Maximum scan window width (m/z) to treat as SIM data
 
 typedef struct sPep{
   int charge;
@@ -23,15 +24,19 @@ typedef struct sScan {
 	int scanNum;
 	char file[256];
 	float rTime;
+	double scanWinLower;
+	double scanWinUpper;  // 0 means no SIM window
 
 	//Constructors & Destructor
-	sScan(){vPep = new vector<sPep>;}
+	sScan(){vPep = new vector<sPep>; scanWinLower=0; scanWinUpper=0;}
 	sScan(const sScan& s){
 		vPep = new vector<sPep>;
 		for(unsigned int i=0;i<s.vPep->size();i++) vPep->push_back(s.vPep->at(i));
 		scanNum = s.scanNum;
 		strcpy(file,s.file);
 		rTime=s.rTime;
+		scanWinLower=s.scanWinLower;
+		scanWinUpper=s.scanWinUpper;
 	}
 	~sScan(){delete vPep;}
 
@@ -44,6 +49,8 @@ typedef struct sScan {
 			scanNum = s.scanNum;
 			strcpy(file,s.file);
 			rTime=s.rTime;
+			scanWinLower=s.scanWinLower;
+			scanWinUpper=s.scanWinUpper;
 		}
 		return *this;
 	}
