@@ -180,7 +180,7 @@ bool CKronik2::processHK(char*  in, char* out) {
 
     if(tag=='S') {
 			if(firstScan) firstScan=false;
-			else allScans.push_back(scan);
+			else allScans.push_back(scan);	
 			scan.clear();
 			scan.scanWinLower=0;
 			scan.scanWinUpper=0;
@@ -206,7 +206,7 @@ bool CKronik2::processHK(char*  in, char* out) {
 			if(prevTok!=NULL && lastTok!=NULL){
 				double val1=atof(prevTok);
 				double val2=atof(lastTok);
-				if(val1>0 && val2>0 && val2>val1 && (val2-val1)<=MAX_SIM_WINDOW_MZ){
+				if(val1>0 && val2>0 && val2>val1){
 					scan.scanWinLower=val1;
 					scan.scanWinUpper=val2;
 				}
@@ -222,15 +222,6 @@ bool CKronik2::processHK(char*  in, char* out) {
 	fclose(hkr);
 
   cout << pepCount << " peptides from " << allScans.size() << " scans." << endl;
-
-  //Detect SIM mode: check if any scan has a narrow window (width <= 500 m/z)
-  bool bSimData=false;
-  for(i=0;i<allScans.size();i++){
-    if(allScans[i].scanWinUpper>0 && (allScans[i].scanWinUpper-allScans[i].scanWinLower)<=MAX_SIM_WINDOW_MZ){
-      bSimData=true;
-      break;
-    }
-  }
 
   //for(i=0;i<allScans.size();i++) allScans[i].sortIntRev();
 	for(i=0;i<allScans.size();i++) allScans[i].sortMonoMass();
@@ -273,10 +264,10 @@ bool CKronik2::processHK(char*  in, char* out) {
     vLeft.clear();
     gap=0;
 		i=sIndex-1;
+    double featureMZ=(mass+charge*1.00727649)/charge;
     while(i>-1 && gap<=iGapTol){
-      //SIM-aware: skip scans whose window doesn't cover this feature's m/z
-      if(bSimData && allScans[i].scanWinUpper>0){
-        double featureMZ=(mass+charge*1.00727649)/charge;
+      // Skip scans whose window doesn't cover this feature's m/z
+      if(allScans[i].scanWinUpper>0){
         if(featureMZ<allScans[i].scanWinLower || featureMZ>allScans[i].scanWinUpper){
           i--;
           continue;
@@ -300,9 +291,8 @@ bool CKronik2::processHK(char*  in, char* out) {
     gap=0;
     i=sIndex+1;
     while(i<allScans.size() && gap<=iGapTol){
-      //SIM-aware: skip scans whose window doesn't cover this feature's m/z
-      if(bSimData && allScans[i].scanWinUpper>0){
-        double featureMZ=(mass+charge*1.00727649)/charge;
+      // Skip scans whose window doesn't cover this feature's m/z
+      if(allScans[i].scanWinUpper>0){
         if(featureMZ<allScans[i].scanWinLower || featureMZ>allScans[i].scanWinUpper){
           i++;
           continue;

@@ -8,7 +8,6 @@ using namespace std;
 
 #define FWHMCONST 2.3548200450309493820231386529194
 #define SQRTTWO 1.4142135623730950488016887242097
-#define MAX_SIM_WINDOW_MZ 500.0  // Maximum scan window width (m/z) to treat as SIM data
 
 typedef struct sPep{
   int charge;
