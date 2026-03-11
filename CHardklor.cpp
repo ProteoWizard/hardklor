@@ -45,7 +45,6 @@ limitations under the License.
 #include "CMercury8.h"
 #include "CSpecAnalyze.h"
 #include "Smooth.h"
-#include "Kronik2/CKronik2.h"
 #include <iomanip>
 #include <cstdio>
 #include <io.h>
@@ -2278,10 +2277,10 @@ void CHardklor::WriteScanLine(Spectrum& s, fstream& fptr, int format){
 				fptr << "\t0.0\t0\t0.0";
 			}
 		}
-    //Write scan window bounds for SIM data (narrow isolation windows)
-    if(s.getScanWindowLower()>0 && s.getScanWindowUpper()>0 && (s.getScanWindowUpper()-s.getScanWindowLower())<=MAX_SIM_WINDOW_MZ){
-      fptr << "\t" << s.getScanWindowLower() << "\t" << s.getScanWindowUpper();
-    }
+	// Write scan window bounds
+	if(s.getScanWindowLower()>0 && s.getScanWindowUpper()>0){
+		fptr << "\t" << s.getScanWindowLower() << "\t" << s.getScanWindowUpper();
+	}
     fptr << endl;
   } else if(format==1){
     fptr << "<Spectrum Scan=\"" << s.getScanNumber() << "\" ";

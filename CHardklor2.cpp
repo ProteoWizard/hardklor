@@ -16,7 +16,6 @@ limitations under the License.
 */
 
 #include "CHardklor2.h"
-#include "Kronik2/CKronik2.h"
 
 #include <corecrt_io.h>
 
@@ -1559,10 +1558,10 @@ void CHardklor2::WriteScanLine(Spectrum& s, FILE* fptr, int format){
 				fprintf(fptr,"\t0.0\t0\t0.0");
 			}
 		}
-    //Write scan window bounds for SIM data (narrow isolation windows)
-    if(s.getScanWindowLower()>0 && s.getScanWindowUpper()>0 && (s.getScanWindowUpper()-s.getScanWindowLower())<=MAX_SIM_WINDOW_MZ){
-      fprintf(fptr,"\t%.4f\t%.4f",s.getScanWindowLower(),s.getScanWindowUpper());
-    }
+	// Write scan window bounds
+	if(s.getScanWindowLower()>0 && s.getScanWindowUpper()>0){
+		fprintf(fptr,"\t%.4f\t%.4f",s.getScanWindowLower(),s.getScanWindowUpper());
+	}
     fprintf(fptr,"\n");
 
 		//For XML output
