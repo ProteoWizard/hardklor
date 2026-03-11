@@ -206,7 +206,7 @@ bool CKronik2::processHK(char*  in, char* out) {
 			if(prevTok!=NULL && lastTok!=NULL){
 				double val1=atof(prevTok);
 				double val2=atof(lastTok);
-				if(val1>0 && val2>0 && val2>val1){
+				if(val1>0 && val2>val1){
 					scan.scanWinLower=val1;
 					scan.scanWinUpper=val2;
 				}
@@ -264,15 +264,16 @@ bool CKronik2::processHK(char*  in, char* out) {
     vLeft.clear();
     gap=0;
 		i=sIndex-1;
-    double featureMZ=(mass+charge*1.00727649)/charge;
+    double massTol=mass/1000000*dPPMTol;
+    double featureMzLow=mzFromMassCharge(mass-massTol,charge);
+    double featureMzHigh=mzFromMassCharge(mass+massTol,charge);
     while(i>-1 && gap<=iGapTol){
-      // Skip scans whose window doesn't cover this feature's m/z
-      if(allScans[i].scanWinUpper>0){
-        if(featureMZ<allScans[i].scanWinLower || featureMZ>allScans[i].scanWinUpper){
-          i--;
-          continue;
-        }
-      }
+    // Skip scans whose window doesn't cover this feature's m/z
+    if(allScans[i].scanWinUpper > 0 &&
+      (featureMzHigh<allScans[i].scanWinLower || featureMzLow>allScans[i].scanWinUpper)){
+        i--;
+        continue;
+     }
       bMatch=false;
       t.scan=i;
 			t.pep=binarySearch(allScans,i,mass,charge);
@@ -292,11 +293,10 @@ bool CKronik2::processHK(char*  in, char* out) {
     i=sIndex+1;
     while(i<allScans.size() && gap<=iGapTol){
       // Skip scans whose window doesn't cover this feature's m/z
-      if(allScans[i].scanWinUpper>0){
-        if(featureMZ<allScans[i].scanWinLower || featureMZ>allScans[i].scanWinUpper){
+      if(allScans[i].scanWinUpper>0) &&
+        (featureMzHigh<allScans[i].scanWinLower || featureMzLow>allScans[i].scanWinUpper)){
           i++;
           continue;
-        }
       }
       bMatch=false;
       t.scan=i;

@@ -8,6 +8,11 @@ using namespace std;
 
 #define FWHMCONST 2.3548200450309493820231386529194
 #define SQRTTWO 1.4142135623730950488016887242097
+#define PROTON 1.00727649
+
+inline double mzFromMassCharge(double mass, int charge){
+  return (mass + charge * PROTON) / charge;
+}
 
 typedef struct sPep{
   int charge;
